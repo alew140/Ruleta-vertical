@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruleta Vertical</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: transparent;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const VerticalRoulette = () => {
+
+            // !! CONFIGURACION !! //
+
+            // Edita aqui ( si no tiene URL saldra el name )
+
+            const [items] = React.useState([
+                {
+                    name: 'Nombre del Item',
+                    imageUrl: 'URL_DE_LA_IMAGEN'
+                },
+                // Añade más items según necesites
+            ]);
+
+            // Edita aqui la velocidad ( 5000 recomendado )
+
+            const speed = 5000;
+
+            // Ancho del borde en Pixeles ( 20 recomendado )
+
+            const borde = 20;
+
+            // Redondeado de las esquinas [0 - 100] ( recomendado 40 )
+
+            const rodondeado = 40;
+
+            // Color del borde en css o exadecimal
+
+            const colorDelBorde = 'white';
+
+
+            // !! FIN DE LA CONFIGURACION !! //
+
+            //   NO TOCAR APARTIR DE AQUI //
+
+            const [isSpinning, setIsSpinning] = React.useState(false);
+            const [imageSize, setImageSize] = React.useState(window.innerHeight * 0.9);
+
+            React.useEffect(() => {
+                const handleResize = () => {
+                    setImageSize(window.innerHeight * 0.9);
+                };
+
+                window.addEventListener('resize', handleResize);
+                return () => window.removeEventListener('resize', handleResize);
+            }, []);
+
+            const rouletteRef = React.useRef(null);
+            const animationRef = React.useRef(null);
+            const offsetRef = React.useRef(0);
+
+            const updateAnimation = () => {
+                if (!isSpinning || !rouletteRef.current) return;
+                offsetRef.current += speed / 60;
+                const maxOffset = items.length * imageSize;
+                if (offsetRef.current >= maxOffset) {
+                    offsetRef.current = 0;
+                }
+                rouletteRef.current.style.transform = `translateY(-${offsetRef.current}px)`;
+                animationRef.current = requestAnimationFrame(updateAnimation);
+            };
+
+            const centerItem = () => {
+                if (!rouletteRef.current) return;
+                const currentPosition = offsetRef.current % (items.length * imageSize);
+                const itemIndex = Math.round(currentPosition / imageSize);
+                const targetOffset = itemIndex * imageSize;
+
+                const animate = () => {
+                    const diff = targetOffset - offsetRef.current;
+                    const step = diff * 0.1;
+                    offsetRef.current += step;
+                    rouletteRef.current.style.transform = `translateY(-${offsetRef.current}px)`;
+                    if (Math.abs(diff) > 0.5) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        offsetRef.current = targetOffset;
+                        rouletteRef.current.style.transform = `translateY(-${targetOffset}px)`;
+                    }
+                };
+                animate();
+            };
+
+            const toggleSpin = () => {
+                if (isSpinning) {
+                    setIsSpinning(false);
+                    return;
+                }
+                setIsSpinning(true);
+                const stopTime = 3000 + Math.random() * 7000;
+                setTimeout(() => {
+                    setIsSpinning(false);
+                    centerItem();
+                }, stopTime);
+            };
+
+            React.useEffect(() => {
+                const timer = setTimeout(() => {
+                    toggleSpin();
+                }, 500);
+
+                return () => clearTimeout(timer);
+            }, []);
+
+            React.useEffect(() => {
+                if (isSpinning) {
+                    animationRef.current = requestAnimationFrame(updateAnimation);
+                } else if (animationRef.current) {
+                    cancelAnimationFrame(animationRef.current);
+                }
+                return () => {
+                    if (animationRef.current) {
+                        cancelAnimationFrame(animationRef.current);
+                    }
+                };
+            }, [isSpinning]);
+
+            return (
+                <div className="p-6">
+                    <div className="mx-auto" style={{ width: 'fit-content' }}>
+                        <div
+                            className="relative overflow-hidden mb-6"
+                            style={{
+                                border: `${borde}px solid ${colorDelBorde}`,
+                                borderRadius: `${rodondeado}px`,
+                                height: `${imageSize}px`,
+                                width: `${imageSize}px`
+                            }}
+                        >
+                            <div ref={rouletteRef} className="absolute left-0 right-0">
+                                {[...items, ...items, ...items].map((item, index) => (
+                                    <div
+                                        key={index}
+                                        className="flex items-center justify-center"
+                                        style={{ height: `${imageSize}px` }}
+                                    >
+                                        {item.imageUrl ? (
+                                            <img
+                                                src={item.imageUrl}
+                                                alt={item.name}
+                                                className="object-cover rounded"
+                                                style={{ width: `${imageSize}px`, height: `${imageSize}px` }}
+                                            />
+                                        ) : (
+                                            <div
+                                                className="flex items-center justify-center bg-gray-200 rounded"
+                                                style={{ width: `${imageSize}px`, height: `${imageSize}px` }}
+                                            >
+                                                <span className="text-center px-2">{item.name}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<VerticalRoulette />);
+    </script>
+</body>
+
+</html>
