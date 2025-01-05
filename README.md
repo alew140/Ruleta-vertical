@@ -1,6 +1,7 @@
 # Ruleta Vertical (Vertical Roulette)
 
 Una ruleta vertical interactiva construida con React que muestra imágenes o textos en una animación de desplazamiento vertical continuo.
+DEMO: https://alew140.com/Over2
 
 ## Características
 
